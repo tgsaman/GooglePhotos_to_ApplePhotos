@@ -1,2 +1,32 @@
 # GooglePhotos_to_ApplePhotos
-A tool to repair & analyze the JSON metadata files included with Google Photo exports, repairing all MacOS, iOS, and iPadOS functionality for images.
+
+This utility processes the JSON metadata that accompanies a Google Photos export and applies it to the matching media files. The goal is to restore location data and creation timestamps so that the files behave correctly in Apple Photos.
+
+## Requirements
+- **macOS** with Python 3.8+
+- [`exiftool`](https://exiftool.org/) must be installed and available on your `PATH`. The easiest way is via [Homebrew](https://brew.sh/):
+  ```bash
+  brew install exiftool
+  ```
+
+## Usage
+Run the script and pass the path to your extracted Google Photos export. By default it will modify the files in place. Use `--dry-run` to generate the log and batch file without running `exiftool`.
+
+```bash
+python3 photo_metadata_patch.py /path/to/export --dry-run
+```
+
+You can control the number of worker threads with `--workers`:
+
+```bash
+python3 photo_metadata_patch.py /path/to/export --workers 8
+```
+
+A `metadata_log.csv` file will be written in the root of the export describing all operations.
+
+## Testing
+Basic unit tests are located in the `tests` directory and can be run with:
+
+```bash
+python3 -m pytest
+```

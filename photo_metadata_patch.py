@@ -7,6 +7,7 @@ from pathlib import Path
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
 import sys
+import argparse
 
 def print_progress_bar(iteration, total, prefix='', length=40):
     percent = f"{100 * (iteration / float(total)):.1f}"
@@ -17,6 +18,7 @@ def print_progress_bar(iteration, total, prefix='', length=40):
         print()
 
 def index_media_files(root_dir, media_exts):
+    """Return a mapping of filename to paths for all media files under root_dir."""
     media_index = {}
     for root, _, files in os.walk(root_dir):
         for file in files:
@@ -29,6 +31,7 @@ def index_media_files(root_dir, media_exts):
 
 
 def load_json_metadata(json_path):
+    """Load a JSON file and return the parsed data or None on failure."""
     try:
         with open(json_path, "r", encoding="utf-8") as f:
             return json.load(f)
@@ -37,6 +40,7 @@ def load_json_metadata(json_path):
 
 
 def get_duplicate_type(matches, metadata_url, media_index):
+    """Determine if a set of files are duplicates based on metadata URLs."""
     urls_seen = []
     for match in matches:
         match_key = match.name + ".supplemental-metadata.json"
@@ -57,14 +61,20 @@ def get_duplicate_type(matches, metadata_url, media_index):
 
 
 def prepare_exiftool_batch(commands, batch_file_path):
+    """Write exiftool commands to a batch file."""
     with open(batch_file_path, "w", encoding="utf-8") as f:
         for cmd in commands:
             f.write(cmd + "\n")
 
 
 def apply_metadata_batch(batch_commands, dry_run):
+    """Execute a batch of exiftool commands unless dry_run is True."""
     if dry_run or not batch_commands:
         return True
+
+    if not shutil.which("exiftool"):
+        print("Error: 'exiftool' not found. Please install exiftool and ensure it is in your PATH.", file=sys.stderr)
+        return False
 
     batch_file = Path("exiftool_batch.txt")
     prepare_exiftool_batch(batch_commands, batch_file)
@@ -81,6 +91,7 @@ def apply_metadata_batch(batch_commands, dry_run):
 
 
 def process_metadata_files(project_root, dry_run=True, parallel_workers=4):
+    """Process all JSON metadata files under project_root."""
     root_path = Path(project_root).expanduser()
     if not root_path.exists():
         print(f"Error: Project root '{root_path}' does not exist.", file=sys.stderr)
@@ -182,11 +193,12 @@ def process_metadata_files(project_root, dry_run=True, parallel_workers=4):
                     note = f"Metadata queued but skipped GPS (error: {e})"
             else:
                 note = "Metadata queued without GPS" if not note else note
-                cmd.append(str(match))
-                if len(cmd) > 1:  # Must contain at least one metadata operation + filename
-                    batch_commands.append(" ".join(cmd))
-                else:
-                    note = "Metadata skipped: no valid operations"
+
+            cmd.append(str(match))
+            if len(cmd) > 1:  # Must contain at least one metadata operation + filename
+                batch_commands.append(" ".join(cmd))
+            else:
+                note = "Metadata skipped: no valid operations"
             modified = "Yes" if not dry_run else "No"
             note = "Metadata queued" if not dry_run and not note else note
             if dry_run:
@@ -202,9 +214,8 @@ def process_metadata_files(project_root, dry_run=True, parallel_workers=4):
 
     with ThreadPoolExecutor(max_workers=parallel_workers) as executor:
         total = len(json_paths)
-        with ThreadPoolExecutor(max_workers=parallel_workers) as executor:
-            for i, result in enumerate(executor.map(process_json, json_paths), 1):
-                print_progress_bar(i, total, prefix="Processing")
+        for i, result in enumerate(executor.map(process_json, json_paths), 1):
+            print_progress_bar(i, total, prefix="Processing")
 
             if isinstance(result, list) and all(isinstance(x, list) for x in result):
                 log_rows.extend(result)
@@ -230,7 +241,13 @@ def process_metadata_files(project_root, dry_run=True, parallel_workers=4):
     return log_csv_path
 
 if __name__ == "__main__":
-    process_metadata_files("sample/filepath/here", dry_run=False, parallel_workers=8)
+    parser = argparse.ArgumentParser(description="Apply Google Photos metadata to media files")
+    parser.add_argument("root", help="Path to the Google Photos export root directory")
+    parser.add_argument("--dry-run", action="store_true", help="Show operations without running exiftool")
+    parser.add_argument("--workers", type=int, default=4, help="Number of parallel worker threads")
+    args = parser.parse_args()
+
+    process_metadata_files(args.root, dry_run=args.dry_run, parallel_workers=args.workers)
 
 # Example usage:
 # process_metadata_files("sample/filepath/here", dry_run=True, parallel_workers=8)
