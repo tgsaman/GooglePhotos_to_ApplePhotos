@@ -90,7 +90,7 @@ def apply_metadata_batch(batch_commands, dry_run):
             batch_file.unlink()
 
 
-def process_metadata_files(project_root, dry_run=True, parallel_workers=4):
+def process_metadata_files(project_root, dry_run=True, parallel_workers=4, output_path=None):
     """Process all JSON metadata files under project_root."""
     root_path = Path(project_root).expanduser()
     if not root_path.exists():
@@ -224,7 +224,8 @@ def process_metadata_files(project_root, dry_run=True, parallel_workers=4):
 
     success = apply_metadata_batch(batch_commands, dry_run)
 
-    log_csv_path = root_path / "metadata_log.csv"
+    log_csv_path = Path(output_path).expanduser() if output_path else Path.home() / "Desktop" / "metadata_report.csv"
+    log_csv_path.parent.mkdir(parents=True, exist_ok=True)
     try:
         with open(log_csv_path, "w", newline="", encoding="utf-8") as log_file:
             writer = csv.writer(log_file)
@@ -245,9 +246,10 @@ if __name__ == "__main__":
     parser.add_argument("root", help="Path to the Google Photos export root directory")
     parser.add_argument("--dry-run", action="store_true", help="Show operations without running exiftool")
     parser.add_argument("--workers", type=int, default=4, help="Number of parallel worker threads")
+    parser.add_argument("--output", help="Path to output CSV (default: ~/Desktop/metadata_report.csv)")
     args = parser.parse_args()
 
-    process_metadata_files(args.root, dry_run=args.dry_run, parallel_workers=args.workers)
+    process_metadata_files(args.root, dry_run=args.dry_run, parallel_workers=args.workers, output_path=args.output)
 
 # Example usage:
 # process_metadata_files("sample/filepath/here", dry_run=True, parallel_workers=8)

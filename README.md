@@ -22,7 +22,11 @@ You can control the number of worker threads with `--workers`:
 python3 photo_metadata_patch.py /path/to/export --workers 8
 ```
 
-A `metadata_log.csv` file will be written in the root of the export describing all operations.
+By default a `metadata_report.csv` file is written to your Desktop. Use `--output` to specify a different location.
+
+```bash
+python3 photo_metadata_patch.py /path/to/export --output /tmp/report.csv
+```
 
 ## Testing
 Basic unit tests are located in the `tests` directory and can be run with:
