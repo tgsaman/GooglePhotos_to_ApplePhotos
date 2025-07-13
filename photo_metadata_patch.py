@@ -43,18 +43,12 @@ def get_duplicate_type(matches, metadata_url, media_index):
     """Determine if a set of files are duplicates based on metadata URLs."""
     urls_seen = []
     for match in matches:
-        match_key = match.name + ".supplemental-metadata.json"
-        for p in media_index.get(match.name.lower(), []):
-            match_json_path = Path(p).parent / match_key
-            if match_json_path.exists():
-                with open(match_json_path, "r", encoding="utf-8") as mf:
-                    try:
-                        match_data = json.load(mf)
-                        urls_seen.append(match_data.get("url", ""))
-                    except json.JSONDecodeError:
-                        urls_seen.append("")
-            else:
-                urls_seen.append(metadata_url)
+        match_json_path = match.parent / (match.name + ".supplemental-metadata.json")
+        if match_json_path.exists():
+            match_data = load_json_metadata(match_json_path)
+            urls_seen.append(match_data.get("url", "") if match_data else "")
+        else:
+            urls_seen.append(metadata_url)
     if urls_seen.count(metadata_url) == len(matches):
         return "Exact Duplicate" if len(matches) > 1 else "Unique"
     return "Misleading Duplicate"
