@@ -46,10 +46,10 @@ def test_get_duplicate_type():
 
         media_index = index_media_files(root, {".jpg"})
         matches = media_index["img.jpg"]
-        assert get_duplicate_type(matches, "A", media_index) == "Misleading Duplicate"
+        assert get_duplicate_type(matches, "A", media_index) == "Exact Duplicate"
 
         meta2.write_text(json.dumps({"url": "B"}))
-        assert get_duplicate_type(matches, "A", media_index) == "Exact Duplicate"
+        assert get_duplicate_type(matches, "A", media_index) == "Misleading Duplicate"
 
         # unique when only one match
         assert get_duplicate_type([file1], "A", media_index) == "Unique"
