@@ -28,6 +28,11 @@ By default a `metadata_report.csv` file is written to your Desktop. Use `--outpu
 python3 photo_metadata_patch.py /path/to/export --output /tmp/report.csv
 ```
 
+## GUI Launcher
+For a simple graphical front end, double-click the `launch_gui.command` file on macOS.
+It opens a small window to select your export folder and run the patching process.
+The GUI requires the same Python and `exiftool` dependencies as the command-line version.
+
 ## Testing
 Basic unit tests are located in the `tests` directory and can be run with:
 
