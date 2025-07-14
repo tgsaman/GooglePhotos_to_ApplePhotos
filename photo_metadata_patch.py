@@ -78,14 +78,10 @@ def get_duplicate_type(matches, metadata_url, media_index):
         return "Exact Duplicate" if len(matches) > 1 else "Unique"
     return "Misleading Duplicate"
 
-
 def prepare_exiftool_batch(commands, batch_file_path):
-    """Write exiftool arguments to a batch file."""
     with open(batch_file_path, "w", encoding="utf-8") as f:
-        for args in commands:
-            for arg in args:
-                f.write(f"{arg}\n")
-
+        for line in commands:
+            f.write(line + "\n")
 
 def apply_metadata_batch(batch_commands, dry_run):
     """Execute a batch of exiftool commands unless dry_run is True."""
@@ -102,6 +98,12 @@ def apply_metadata_batch(batch_commands, dry_run):
         # Let exiftool write output directly to the console. Capturing stdout and
         # stderr can cause the process to hang if large amounts of data are
         # produced, so we rely on the parent's standard streams instead.
+        print(f"Executing exiftool with {len(batch_commands)} commands")
+        if dry_run:
+            print("\n--- Batch Commands Preview ---")
+            for cmd in batch_commands:
+                print(cmd)
+
         subprocess.run(
             ["exiftool", "-@", str(batch_file), "-overwrite_original"], check=True
         )
@@ -226,11 +228,10 @@ def process_metadata_files(project_root, dry_run=True, parallel_workers=4, outpu
                 note = "Metadata queued without GPS" if not note else note
 
             cmd.append(str(match))
-            if len(cmd) > 1:  # Must contain at least one metadata operation + filename
-                # Quote each argument so spaces and special characters are preserved
+      # Ensure we have at least one metadata field *before* the file path
+            if any(arg.startswith('-') for arg in cmd[:-1]):
                 quoted_cmd = " ".join(shlex.quote(c) for c in cmd)
                 batch_commands.append(quoted_cmd)
-
             else:
                 note = "Metadata skipped: no valid operations"
             modified = "Yes" if not dry_run else "No"
