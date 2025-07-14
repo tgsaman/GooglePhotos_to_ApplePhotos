@@ -29,11 +29,11 @@ python3 photo_metadata_patch.py /path/to/export --output /tmp/report.csv
 ```
 
 ## GUI Launcher
-For a simple graphical front end, double-click the `launch_gui.command` file on macOS.
-It opens a small window where you choose your export folder and optionally where to save the CSV report.
-Ensure the photos are not open in other applications so Finder does not lock the files while they are being updated.
+### Tkinter
+Double‑click the `launch_gui.command` file for the original Tkinter interface. It lets you choose the export folder and optional CSV destination. Make sure your photos aren’t open in other apps so Finder doesn’t lock them.
 
-The GUI requires the same Python and `exiftool` dependencies as the command-line version.
+### SwiftUI
+For a macOS‑native interface built with SwiftUI, open `PhotoMetadataGUI.swift` in Xcode (macOS Sequoia or later) and run the app. The Swift version mirrors the Python GUI and invokes `photo_metadata_patch.py` behind the scenes.
 
 ## Testing
 Basic unit tests are located in the `tests` directory and can be run with:
