@@ -7,10 +7,11 @@ The goal is to help make people's PII simultaenously more interoperable and more
 By default, this project has a few hard and fast rules:
 
 - Zero PII exposure.
-- Zero **Python** package installs.
+- Python packages to increase performance of exiftool are allowed.
 - Swift (including SwiftUI) is allowed for macOS Sequoia (macOS 26) or later.
 - Transparent & Human-Readable outputs, changes, and error-logging.
 - Explicit > Implicit. Clean > Clever.
+- Running the code should be minimially difficult from a UX perspective.
 
 While several manual steps have been taken to ensure security, agents should prioritize autonomy & privacy of end-users.
 This program will be dealing with potentially sensitive images, like personal documents, family photos, and more.
