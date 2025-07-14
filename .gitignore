@@ -12,6 +12,8 @@
 *.pyc
 __pycache__/
 *.log
+*.pyc
+*.pyo
 
 # 🤖 Codex + test logs (optional)
 debug_report.txt
@@ -25,4 +27,3 @@ codex_session_notes.md
 # 🧪 Tests/output
 /tests/__pycache__/
 /tests/*.out
-
