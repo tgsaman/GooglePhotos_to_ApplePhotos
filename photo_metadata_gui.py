@@ -46,7 +46,10 @@ class App(tk.Tk):
         tk.Entry(frm1, textvariable=self.root_var, width=50).pack(side="left", expand=True, fill="x")
         tk.Button(frm1, text="Choose Folder...", command=self.browse_root).pack(side="left", padx=5)
 
-
+        tk.Label(self, text="Output CSV (optional):").pack(anchor="w", padx=10, pady=5)
+        frm2 = tk.Frame(self)
+        frm2.pack(fill="x", padx=10)
+        tk.Entry(frm2, textvariable=self.output_var, width=50).pack(side="left", expand=True, fill="x")
         tk.Button(frm2, text="Save CSV As...", command=self.browse_output).pack(side="left", padx=5)
 
         frm3 = tk.Frame(self)
