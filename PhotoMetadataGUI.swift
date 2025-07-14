@@ -64,17 +64,19 @@ struct ContentView: View {
         running = true
         statusMessage = "Running..."
 
-        let script = Bundle.main.resourceURL!
+        let defaultScript = Bundle.main.resourceURL!
             .appendingPathComponent("photo_metadata_patch.py").path
+        let script = ProcessInfo.processInfo.environment["PY_SCRIPT_PATH"] ?? defaultScript
 
         var args = [script, rootPath, "--workers", "\(workers)"]
         if dryRun { args.append("--dry-run") }
         if !outputPath.isEmpty { args += ["--output", outputPath] }
 
+        let python = ProcessInfo.processInfo.environment["PYTHON_EXECUTABLE"] ?? "python3"
         DispatchQueue.global().async {
             let task = Process()
             task.executableURL = URL(fileURLWithPath: "/usr/bin/env")
-            task.arguments = ["python3"] + args
+            task.arguments = [python] + args
 
             let pipe = Pipe()
             task.standardOutput = pipe
