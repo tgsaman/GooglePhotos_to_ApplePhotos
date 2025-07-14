@@ -22,6 +22,18 @@ def check_directory_writable(path):
     except Exception:
         return False
 
+
+def check_directory_writable(path):
+    """Return True if we can create and delete a temp file in path."""
+    test_file = Path(path) / ".write_test"
+    try:
+        with open(test_file, "w") as f:
+            f.write("test")
+        test_file.unlink()
+        return True
+    except Exception:
+        return False
+
 def print_progress_bar(iteration, total, prefix='', length=40):
     percent = f"{100 * (iteration / float(total)):.1f}"
     filled_length = int(length * iteration // total)
@@ -87,8 +99,12 @@ def apply_metadata_batch(batch_commands, dry_run):
     batch_file = Path("exiftool_batch.txt")
     prepare_exiftool_batch(batch_commands, batch_file)
     try:
-        subprocess.run(["exiftool", "-@", str(batch_file), "-overwrite_original"],
-                       check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        # Let exiftool write output directly to the console. Capturing stdout and
+        # stderr can cause the process to hang if large amounts of data are
+        # produced, so we rely on the parent's standard streams instead.
+        subprocess.run(
+            ["exiftool", "-@", str(batch_file), "-overwrite_original"], check=True
+        )
         return True
     except subprocess.CalledProcessError as e:
         print(f"Exiftool batch error: {e.stderr.decode().strip()}", file=sys.stderr)

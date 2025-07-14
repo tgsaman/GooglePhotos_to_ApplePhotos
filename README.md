@@ -30,7 +30,6 @@ python3 photo_metadata_patch.py /path/to/export --output /tmp/report.csv
 
 ## GUI Launcher
 For a simple graphical front end, double-click the `launch_gui.command` file on macOS.
-
 It opens a small window where you choose your export folder and optionally where to save the CSV report.
 Ensure the photos are not open in other applications so Finder does not lock the files while they are being updated.
 
