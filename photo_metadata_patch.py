@@ -192,8 +192,10 @@ def process_metadata_files(project_root, dry_run=True, parallel_workers=4, outpu
 
             cmd.append(str(match))
             if len(cmd) > 1:  # Must contain at least one metadata operation + filename
-                # Quote each argument individually for the exiftool argfile
-                batch_commands.append([shlex.quote(c) for c in cmd])
+                # Quote each argument so spaces and special characters are preserved
+                quoted_cmd = " ".join(shlex.quote(c) for c in cmd)
+                batch_commands.append(quoted_cmd)
+
             else:
                 note = "Metadata skipped: no valid operations"
             modified = "Yes" if not dry_run else "No"
