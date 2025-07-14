@@ -10,6 +10,16 @@ import sys
 import argparse
 import shlex
 
+def flatten_json(y, parent_key='', sep=':'):
+    items = {}
+    for k, v in y.items():
+        new_key = f"{parent_key}{sep}{k}" if parent_key else k
+        if isinstance(v, dict):
+            items.update(flatten_json(v, new_key, sep=sep))
+        else:
+            items[new_key] = v
+    return items
+
 
 def check_directory_writable(path):
     """Return True if we can create and delete a temp file in path."""
@@ -80,8 +90,9 @@ def get_duplicate_type(matches, metadata_url, media_index):
 
 def prepare_exiftool_batch(commands, batch_file_path):
     with open(batch_file_path, "w", encoding="utf-8") as f:
-        for line in commands:
-            f.write(line + "\n")
+        for cmd_list in commands:
+            for arg in cmd_list:
+                f.write(arg + "\n")
 
 def apply_metadata_batch(batch_commands, dry_run):
     """Execute a batch of exiftool commands unless dry_run is True."""
@@ -109,12 +120,12 @@ def apply_metadata_batch(batch_commands, dry_run):
         )
         return True
     except subprocess.CalledProcessError as e:
-        print(f"Exiftool batch error: {e.stderr.decode().strip()}", file=sys.stderr)
+        print(f"Exiftool batch error: {e}", file=sys.stderr)
         return False
+
     finally:
         if batch_file.exists():
             batch_file.unlink()
-
 
 def process_metadata_files(project_root, dry_run=True, parallel_workers=4, output_path=None):
     """Process all JSON metadata files under project_root."""
@@ -201,14 +212,14 @@ def process_metadata_files(project_root, dry_run=True, parallel_workers=4, outpu
 
             if ext in {'.mp4', '.mov'}:
                 cmd += [
-                    f'-QuickTime:CreateDate="{dt}"',
-                    f'-Keys:CreationDate="{dt}"',
-                    f'-UserData:Comment="{comment}"'
+                    f'-QuickTime:CreateDate="{dt}',
+                    f'-Keys:CreationDate="{dt}',
+                    f'-UserData:Comment="{comment}'
                 ]
             elif ext in {'.heic', '.jpg', '.jpeg', '.png'}:
                 cmd += [
-                    f'-AllDates="{dt}"',
-                    f'-XPComment="{comment}"'
+                    f'-AllDates="{dt}',
+                    f'-XPComment="{comment}'
                 ]
 
             if inject_geo:
@@ -231,7 +242,7 @@ def process_metadata_files(project_root, dry_run=True, parallel_workers=4, outpu
       # Ensure we have at least one metadata field *before* the file path
             if any(arg.startswith('-') for arg in cmd[:-1]):
                 quoted_cmd = " ".join(shlex.quote(c) for c in cmd)
-                batch_commands.append(quoted_cmd)
+                batch_commands.append(cmd)
             else:
                 note = "Metadata skipped: no valid operations"
             modified = "Yes" if not dry_run else "No"
@@ -239,7 +250,21 @@ def process_metadata_files(project_root, dry_run=True, parallel_workers=4, outpu
             if dry_run:
                 note = "Dry run only"
 
-        return [file, match.name, title, url, match_type, modified, size, note, ", ".join(missing_fields)]
+        flat_json = flatten_json(data)
+        row = {
+            "JSON Filename": file,
+            "Matched Media": match.name,
+            "Title": title,
+            "URL": url,
+            "Match Type": match_type,
+            "Modified?": modified,
+            "File Size in bytes": size,
+            "Notes": note,
+            "Missing Fields": ", ".join(missing_fields),
+            **flat_json  # injects all flattened JSON keys
+        }
+        return row
+
 
     json_paths = []
     for root, _, files in os.walk(root_path):
@@ -258,6 +283,12 @@ def process_metadata_files(project_root, dry_run=True, parallel_workers=4, outpu
                 log_rows.append(result)
 
     success = apply_metadata_batch(batch_commands, dry_run)
+    all_keys = set()
+    for row in log_rows:
+        if isinstance(row, dict):
+            all_keys.update(row.keys())
+
+    fieldnames = sorted(all_keys)
 
     log_csv_path = Path(output_path).expanduser() if output_path else Path.home() / "Desktop" / "metadata_report.csv"
     log_csv_path.parent.mkdir(parents=True, exist_ok=True)
@@ -269,9 +300,10 @@ def process_metadata_files(project_root, dry_run=True, parallel_workers=4, outpu
         sys.exit(1)
     try:
         with open(log_csv_path, "w", newline="", encoding="utf-8") as log_file:
-            writer = csv.writer(log_file)
-            writer.writerow(csv_headers)
+            writer = csv.DictWriter(log_file, fieldnames=fieldnames)
+            writer.writeheader()
             writer.writerows(log_rows)
+
     except Exception as e:
         print(f"Failed to write CSV log: {e}", file=sys.stderr)
         sys.exit(1)
