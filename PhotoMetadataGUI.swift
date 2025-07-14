@@ -71,10 +71,11 @@ struct ContentView: View {
         if dryRun { args.append("--dry-run") }
         if !outputPath.isEmpty { args += ["--output", outputPath] }
 
+        let python = ProcessInfo.processInfo.environment["PYTHON_EXECUTABLE"] ?? "python3"
         DispatchQueue.global().async {
             let task = Process()
             task.executableURL = URL(fileURLWithPath: "/usr/bin/env")
-            task.arguments = ["python3"] + args
+            task.arguments = [python] + args
 
             let pipe = Pipe()
             task.standardOutput = pipe
