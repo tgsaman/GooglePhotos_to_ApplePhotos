@@ -8,6 +8,7 @@ from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
 import sys
 import argparse
+import shlex
 
 def print_progress_bar(iteration, total, prefix='', length=40):
     percent = f"{100 * (iteration / float(total)):.1f}"
@@ -190,7 +191,9 @@ def process_metadata_files(project_root, dry_run=True, parallel_workers=4, outpu
 
             cmd.append(str(match))
             if len(cmd) > 1:  # Must contain at least one metadata operation + filename
-                batch_commands.append(" ".join(cmd))
+                # Quote each argument so spaces and special characters are preserved
+                quoted_cmd = " ".join(shlex.quote(c) for c in cmd)
+                batch_commands.append(quoted_cmd)
             else:
                 note = "Metadata skipped: no valid operations"
             modified = "Yes" if not dry_run else "No"
