@@ -212,14 +212,14 @@ def process_metadata_files(project_root, dry_run=True, parallel_workers=4, outpu
 
             if ext in {'.mp4', '.mov'}:
                 cmd += [
-                    f'-QuickTime:CreateDate="{dt}',
-                    f'-Keys:CreationDate="{dt}',
-                    f'-UserData:Comment="{comment}'
+                    f'-QuickTime:CreateDate={dt}',
+                    f'-Keys:CreationDate={dt}',
+                    f'-UserData:Comment={comment}'
                 ]
             elif ext in {'.heic', '.jpg', '.jpeg', '.png'}:
                 cmd += [
-                    f'-AllDates="{dt}',
-                    f'-XPComment="{comment}'
+                    f'-AllDates={dt}',
+                    f'-XPComment={comment}'
                 ]
 
             if inject_geo:
