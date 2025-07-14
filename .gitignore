@@ -14,8 +14,6 @@ __pycache__/
 *.log
 *.pyc
 *.pyo
-
-# Virtual environments
 venv/
 
 # 🤖 Codex + test logs (optional)

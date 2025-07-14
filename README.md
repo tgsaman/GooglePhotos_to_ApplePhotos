@@ -8,7 +8,6 @@ This utility processes the JSON metadata that accompanies a Google Photos export
   ```bash
   brew install exiftool
   ```
-- [`pyexiftool`](https://pypi.org/project/pyexiftool/) installed in a Python virtual environment. Run `launch_swift_gui.command` to set up the environment automatically.
 
 ## Usage
 Run the script and pass the path to your extracted Google Photos export. By default it will modify the files in place. Use `--dry-run` to generate the log and batch file without running `exiftool`.
@@ -34,7 +33,7 @@ python3 photo_metadata_patch.py /path/to/export --output /tmp/report.csv
 Double‑click the `launch_gui.command` file for the original Tkinter interface. It lets you choose the export folder and optional CSV destination. Make sure your photos aren’t open in other apps so Finder doesn’t lock them.
 
 ### SwiftUI
-For a macOS-native interface built with SwiftUI, run `launch_swift_gui.command`. The script sets up a Python virtual environment with `pyexiftool` and then opens `PhotoMetadataGUI.swift` in Xcode. The Swift version mirrors the Python GUI and invokes `photo_metadata_patch.py` behind the scenes using the venv's Python interpreter.
+For a macOS‑native interface built with SwiftUI, open `PhotoMetadataGUI.swift` in Xcode (macOS Sequoia or later) and run the app. The Swift version mirrors the Python GUI and invokes `photo_metadata_patch.py` behind the scenes.
 
 ## Testing
 Basic unit tests are located in the `tests` directory and can be run with:

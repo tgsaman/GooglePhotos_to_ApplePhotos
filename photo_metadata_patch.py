@@ -2,16 +2,13 @@ import os
 import json
 import csv
 import shutil
+import subprocess
 from pathlib import Path
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
 import sys
 import argparse
 import shlex
-try:
-    from exiftool import ExifTool
-except ImportError:  # graceful fallback for environments without pyexiftool
-    ExifTool = None
 
 def flatten_json(y, parent_key='', sep=':'):
     items = {}
@@ -91,37 +88,44 @@ def get_duplicate_type(matches, metadata_url, media_index):
         return "Exact Duplicate" if len(matches) > 1 else "Unique"
     return "Misleading Duplicate"
 
+def prepare_exiftool_batch(commands, batch_file_path):
+    with open(batch_file_path, "w", encoding="utf-8") as f:
+        for cmd_list in commands:
+            for arg in cmd_list:
+                f.write(arg + "\n")
+
 def apply_metadata_batch(batch_commands, dry_run):
     """Execute a batch of exiftool commands unless dry_run is True."""
     if dry_run or not batch_commands:
         return True
 
     if not shutil.which("exiftool"):
-        print(
-            "Error: 'exiftool' not found. Please install exiftool and ensure it is in your PATH.",
-            file=sys.stderr,
-        )
+        print("Error: 'exiftool' not found. Please install exiftool and ensure it is in your PATH.", file=sys.stderr)
         return False
 
-    if ExifTool is None:
-        print("Error: pyexiftool not installed", file=sys.stderr)
-        return False
-
+    batch_file = Path("exiftool_batch.txt")
+    prepare_exiftool_batch(batch_commands, batch_file)
     try:
+        # Let exiftool write output directly to the console. Capturing stdout and
+        # stderr can cause the process to hang if large amounts of data are
+        # produced, so we rely on the parent's standard streams instead.
         print(f"Executing exiftool with {len(batch_commands)} commands")
         if dry_run:
             print("\n--- Batch Commands Preview ---")
             for cmd in batch_commands:
                 print(cmd)
-            return True
 
-        with ExifTool() as et:
-            for cmd in batch_commands:
-                et.execute(*[c.encode() for c in cmd])
+        subprocess.run(
+            ["exiftool", "-@", str(batch_file), "-overwrite_original"], check=True
+        )
         return True
-    except Exception as e:
+    except subprocess.CalledProcessError as e:
         print(f"Exiftool batch error: {e}", file=sys.stderr)
         return False
+
+    finally:
+        if batch_file.exists():
+            batch_file.unlink()
 
 def process_metadata_files(project_root, dry_run=True, parallel_workers=4, output_path=None):
     """Process all JSON metadata files under project_root."""
