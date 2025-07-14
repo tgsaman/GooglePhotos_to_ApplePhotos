@@ -1,4 +1,29 @@
+# 📁 Local user data
+/Unmatched_Metadata/
+/metadata_log.csv
+/exiftool_batch.txt
+/exiftool_error_debug.log
+
+# 📁 User-specific exports (move to Desktop by design)
+/Users/*/Desktop/*.csv
+~/Desktop/*.csv
+
+# 🛠 Runtime artifacts
+*.pyc
 __pycache__/
+*.log
 *.pyc
 *.pyo
-*.DS_Store
+
+# 🤖 Codex + test logs (optional)
+debug_report.txt
+codex_session_notes.md
+
+# 🔍 Editor/project files
+.vscode/
+.idea/
+.DS_Store
+
+# 🧪 Tests/output
+/tests/__pycache__/
+/tests/*.out
