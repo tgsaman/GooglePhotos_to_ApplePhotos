@@ -10,6 +10,18 @@ import sys
 import argparse
 import shlex
 
+
+def check_directory_writable(path):
+    """Return True if we can create and delete a temp file in path."""
+    test_file = Path(path) / ".write_test"
+    try:
+        with open(test_file, "w") as f:
+            f.write("test")
+        test_file.unlink()
+        return True
+    except Exception:
+        return False
+
 def print_progress_bar(iteration, total, prefix='', length=40):
     percent = f"{100 * (iteration / float(total)):.1f}"
     filled_length = int(length * iteration // total)
@@ -91,6 +103,13 @@ def process_metadata_files(project_root, dry_run=True, parallel_workers=4, outpu
     root_path = Path(project_root).expanduser()
     if not root_path.exists():
         print(f"Error: Project root '{root_path}' does not exist.", file=sys.stderr)
+        sys.exit(1)
+
+    if not check_directory_writable(root_path):
+        print(
+            f"Error: Unable to write to '{root_path}'. Close other apps that might lock the files.",
+            file=sys.stderr,
+        )
         sys.exit(1)
 
     homeless_json_dir = root_path / "Unmatched_Metadata"
@@ -225,6 +244,12 @@ def process_metadata_files(project_root, dry_run=True, parallel_workers=4, outpu
 
     log_csv_path = Path(output_path).expanduser() if output_path else Path.home() / "Desktop" / "metadata_report.csv"
     log_csv_path.parent.mkdir(parents=True, exist_ok=True)
+    if not check_directory_writable(log_csv_path.parent):
+        print(
+            f"Error: Cannot write to '{log_csv_path.parent}'. Close other apps that might lock the files.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
     try:
         with open(log_csv_path, "w", newline="", encoding="utf-8") as log_file:
             writer = csv.writer(log_file)
