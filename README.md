@@ -32,5 +32,5 @@ python3 photo_metadata_patch.py /path/to/export --output /tmp/report.csv
 Basic unit tests are located in the `tests` directory and can be run with:
 
 ```bash
-python3 -m pytest
+python3 -m unittest discover -s tests
 ```
