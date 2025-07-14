@@ -9,6 +9,18 @@ from concurrent.futures import ThreadPoolExecutor
 import sys
 import argparse
 
+
+def check_directory_writable(path):
+    """Return True if we can create and delete a temp file in path."""
+    test_file = Path(path) / ".write_test"
+    try:
+        with open(test_file, "w") as f:
+            f.write("test")
+        test_file.unlink()
+        return True
+    except Exception:
+        return False
+
 def print_progress_bar(iteration, total, prefix='', length=40):
     percent = f"{100 * (iteration / float(total)):.1f}"
     filled_length = int(length * iteration // total)
@@ -73,8 +85,12 @@ def apply_metadata_batch(batch_commands, dry_run):
     batch_file = Path("exiftool_batch.txt")
     prepare_exiftool_batch(batch_commands, batch_file)
     try:
-        subprocess.run(["exiftool", "-@", str(batch_file), "-overwrite_original"],
-                       check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        # Let exiftool write output directly to the console. Capturing stdout and
+        # stderr can cause the process to hang if large amounts of data are
+        # produced, so we rely on the parent's standard streams instead.
+        subprocess.run(
+            ["exiftool", "-@", str(batch_file), "-overwrite_original"], check=True
+        )
         return True
     except subprocess.CalledProcessError as e:
         print(f"Exiftool batch error: {e.stderr.decode().strip()}", file=sys.stderr)
@@ -89,6 +105,13 @@ def process_metadata_files(project_root, dry_run=True, parallel_workers=4, outpu
     root_path = Path(project_root).expanduser()
     if not root_path.exists():
         print(f"Error: Project root '{root_path}' does not exist.", file=sys.stderr)
+        sys.exit(1)
+
+    if not check_directory_writable(root_path):
+        print(
+            f"Error: Unable to write to '{root_path}'. Close other apps that might lock the files.",
+            file=sys.stderr,
+        )
         sys.exit(1)
 
     homeless_json_dir = root_path / "Unmatched_Metadata"
@@ -220,6 +243,12 @@ def process_metadata_files(project_root, dry_run=True, parallel_workers=4, outpu
 
     log_csv_path = Path(output_path).expanduser() if output_path else Path.home() / "Desktop" / "metadata_report.csv"
     log_csv_path.parent.mkdir(parents=True, exist_ok=True)
+    if not check_directory_writable(log_csv_path.parent):
+        print(
+            f"Error: Cannot write to '{log_csv_path.parent}'. Close other apps that might lock the files.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
     try:
         with open(log_csv_path, "w", newline="", encoding="utf-8") as log_file:
             writer = csv.writer(log_file)
