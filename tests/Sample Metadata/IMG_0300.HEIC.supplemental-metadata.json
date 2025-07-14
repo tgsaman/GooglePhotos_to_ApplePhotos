@@ -1,0 +1,26 @@
+{
+  "title": "IMG_0300.HEIC",
+  "description": "",
+  "imageViews": "17",
+  "creationTime": {
+    "timestamp": "1601618426",
+    "formatted": "Oct 2, 2020, 6:00:26 AM UTC"
+  },
+  "photoTakenTime": {
+    "timestamp": "1600204398",
+    "formatted": "Sep 15, 2020, 9:13:18 PM UTC"
+  },
+  "geoData": {
+    "latitude": 0.0,
+    "longitude": 0.0,
+    "altitude": 0.0,
+    "latitudeSpan": 0.0,
+    "longitudeSpan": 0.0
+  },
+  "url": "https://photos.google.com/photo/Redacting These Doesn't Change Anything",
+  "googlePhotosOrigin": {
+    "mobileUpload": {
+      "deviceType": "IOS_PHONE"
+    }
+  }
+}

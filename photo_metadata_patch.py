@@ -8,6 +8,7 @@ from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
 import sys
 import argparse
+import shlex
 
 
 def check_directory_writable(path):
@@ -67,10 +68,11 @@ def get_duplicate_type(matches, metadata_url, media_index):
 
 
 def prepare_exiftool_batch(commands, batch_file_path):
-    """Write exiftool commands to a batch file."""
+    """Write exiftool arguments to a batch file."""
     with open(batch_file_path, "w", encoding="utf-8") as f:
-        for cmd in commands:
-            f.write(cmd + "\n")
+        for args in commands:
+            for arg in args:
+                f.write(f"{arg}\n")
 
 
 def apply_metadata_batch(batch_commands, dry_run):
@@ -209,7 +211,10 @@ def process_metadata_files(project_root, dry_run=True, parallel_workers=4, outpu
 
             cmd.append(str(match))
             if len(cmd) > 1:  # Must contain at least one metadata operation + filename
-                batch_commands.append(" ".join(cmd))
+                # Quote each argument so spaces and special characters are preserved
+                quoted_cmd = " ".join(shlex.quote(c) for c in cmd)
+                batch_commands.append(quoted_cmd)
+
             else:
                 note = "Metadata skipped: no valid operations"
             modified = "Yes" if not dry_run else "No"
