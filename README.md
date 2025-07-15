@@ -8,6 +8,7 @@ This utility processes the JSON metadata that accompanies a Google Photos export
   ```bash
   brew install exiftool
   ```
+- Optional: `pyexiftool` is needed for fast metadata updates. The Swift GUI launcher will install it in a local virtual environment if missing.
 
 ## Usage
 Run the script and pass the path to your extracted Google Photos export. By default it will modify the files in place. Use `--dry-run` to generate the log and batch file without running `exiftool`.
@@ -29,11 +30,11 @@ python3 photo_metadata_patch.py /path/to/export --output /tmp/report.csv
 ```
 
 ## GUI Launcher
-### Tkinter
-Double‑click the `launch_gui.command` file for the original Tkinter interface. It lets you choose the export folder and optional CSV destination. Make sure your photos aren’t open in other apps so Finder doesn’t lock them.
-
 ### SwiftUI
-For a macOS‑native interface built with SwiftUI, open `PhotoMetadataGUI.swift` in Xcode (macOS Sequoia or later) and run the app. The Swift version mirrors the Python GUI and invokes `photo_metadata_patch.py` behind the scenes.
+Run `./launch_swift_gui.command` to build and launch the Swift interface. The script creates a local Python virtual environment and installs `pyexiftool` if needed.
+
+### Legacy Tkinter
+The older Tkinter GUI is archived under `legacy_gui/`. Run `legacy_gui/launch_gui.command` if you prefer that interface.
 
 ## Testing
 Basic unit tests are located in the `tests` directory and can be run with:
