@@ -8,6 +8,10 @@ This utility processes the JSON metadata that accompanies a Google Photos export
   ```bash
   brew install exiftool
   ```
+- `pyexiftool` Python package provides a persistent exiftool process for faster updates. Install with:
+  ```bash
+  pip3 install -r requirements.txt
+  ```
 
 ## Usage
 Run the script and pass the path to your extracted Google Photos export. By default it will modify the files in place. Use `--dry-run` to generate the log and batch file without running `exiftool`.
