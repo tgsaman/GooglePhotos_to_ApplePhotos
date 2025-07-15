@@ -14,7 +14,7 @@ This utility processes the JSON metadata that accompanies a Google Photos export
   ```
 
 ## Usage
-Run the script and pass the path to your extracted Google Photos export. By default it will modify the files in place. Use `--dry-run` to generate the log and batch file without running `exiftool`.
+Run the script and pass the path to your extracted Google Photos export. By default it will modify the files in place while preserving each file's original modification date using ExifTool's `-P` option. Use `--dry-run` to generate the log and batch file without running `exiftool`.
 
 ```bash
 python3 photo_metadata_patch.py /path/to/export --dry-run

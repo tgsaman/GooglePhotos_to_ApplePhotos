@@ -1,7 +1,9 @@
 import json
+import os
 import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from unittest.mock import patch
 
 try:
     from photo_metadata_patch import (
@@ -70,6 +72,20 @@ class TestPhotoMetadataPatch(unittest.TestCase):
             self.assertEqual(
                 get_duplicate_type([file1], "A", media_index), "Unique"
             )
+
+    def test_apply_metadata_batch_preserves_timestamps(self):
+        cmds = [["-AllDates=2024:01:02 03:04:05", "file.jpg"]]
+        with TemporaryDirectory() as tmp:
+            cwd = os.getcwd()
+            os.chdir(tmp)
+            try:
+                with patch("shutil.which", return_value="/usr/bin/exiftool"):
+                    with patch("subprocess.run") as mock_run:
+                        self.assertTrue(apply_metadata_batch(cmds, dry_run=False))
+                        args = mock_run.call_args[0][0]
+                        self.assertIn("-P", args)
+            finally:
+                os.chdir(cwd)
 
 
 if __name__ == "__main__":
