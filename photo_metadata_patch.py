@@ -116,7 +116,8 @@ def apply_metadata_batch(batch_commands, dry_run):
                 print(cmd)
 
         subprocess.run(
-            ["exiftool", "-@", str(batch_file), "-overwrite_original"], check=True
+            ["exiftool", "-@", str(batch_file), "-overwrite_original", "-P"],
+            check=True,
         )
         return True
     except subprocess.CalledProcessError as e:
