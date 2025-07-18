@@ -23,19 +23,6 @@ def flatten_json(y, parent_key='', sep=':'):
             items[new_key] = v
     return items
 
-
-def check_directory_writable(path):
-    """Return True if we can create and delete a temp file in path."""
-    test_file = Path(path) / ".write_test"
-    try:
-        with open(test_file, "w") as f:
-            f.write("test")
-        test_file.unlink()
-        return True
-    except Exception:
-        return False
-
-
 def check_directory_writable(path):
     """Return True if we can create and delete a temp file in path."""
     test_file = Path(path) / ".write_test"
@@ -67,7 +54,6 @@ def index_media_files(root_dir, media_exts):
                 media_index.setdefault(key, []).append(full_path)
     return media_index
 
-
 def load_json_metadata(json_path):
     """Load a JSON file and return the parsed data or None on failure."""
     try:
@@ -75,7 +61,6 @@ def load_json_metadata(json_path):
             return json.load(f)
     except json.JSONDecodeError:
         return None
-
 
 def get_duplicate_type(matches, metadata_url, media_index):
     """Determine if a set of files are duplicates based on metadata URLs."""
