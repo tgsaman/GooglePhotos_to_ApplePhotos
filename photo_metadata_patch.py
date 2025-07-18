@@ -7,6 +7,7 @@ from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
 import sys
 import argparse
+import shlex
 try:
     from exiftool import ExifTool
 except ImportError:  # graceful fallback for environments without pyexiftool
@@ -154,9 +155,8 @@ def process_metadata_files(project_root, dry_run=True, parallel_workers=4, outpu
             missing_fields.append("timestamp")
         if not title:
             missing_fields.append("title")
-        inject_geo = True
-        if geo.get("latitude", 0.0) == 0.0 and geo.get("longitude", 0.0) == 0.0:
-            inject_geo = False
+        inject_geo = "latitude" in geo and "longitude" in geo
+        if not inject_geo:
             geo = {}
             missing_fields.append("geo")
 
@@ -193,14 +193,14 @@ def process_metadata_files(project_root, dry_run=True, parallel_workers=4, outpu
 
             if ext in {'.mp4', '.mov'}:
                 cmd += [
-                    f'-QuickTime:CreateDate="{dt}"',
-                    f'-Keys:CreationDate="{dt}"',
-                    f'-UserData:Comment="{comment}"'
+                    f'-QuickTime:CreateDate={dt}',
+                    f'-Keys:CreationDate={dt}',
+                    f'-UserData:Comment={comment}'
                 ]
             elif ext in {'.heic', '.jpg', '.jpeg', '.png'}:
                 cmd += [
-                    f'-AllDates="{dt}"',
-                    f'-XPComment="{comment}"'
+                    f'-AllDates={dt}',
+                    f'-XPComment={comment}'
                 ]
 
             if inject_geo:
