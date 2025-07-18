@@ -189,7 +189,7 @@ def process_metadata_files(project_root, dry_run=True, parallel_workers=4, outpu
             dt = datetime.utcfromtimestamp(int(timestamp)).strftime("%Y:%m:%d %H:%M:%S")
             comment = f"{url} {desc} Device:{device_type} Views:{image_views}".strip()
             ext = match.suffix.lower()
-            cmd = []
+            cmd = ['-overwrite_original_in_place']
 
             if ext in {'.mp4', '.mov'}:
                 cmd += [

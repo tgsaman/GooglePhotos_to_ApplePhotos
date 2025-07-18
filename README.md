@@ -2,6 +2,8 @@
 
 This utility processes the JSON metadata that accompanies a Google Photos export and applies it to the matching media files. The goal is to restore location data and creation timestamps so that the files behave correctly in Apple Photos.
 
+ExifTool is invoked with `-overwrite_original_in_place` so no `*_original` backup files are left behind. This avoids leaking file paths in backups and keeps the export directory tidy.
+
 ## Requirements
 - **macOS** with Python 3.8+
 - [`exiftool`](https://exiftool.org/) must be installed and available on your `PATH`. The easiest way is via [Homebrew](https://brew.sh/):

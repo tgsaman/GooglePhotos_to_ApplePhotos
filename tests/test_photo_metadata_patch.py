@@ -3,10 +3,13 @@ import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
+from unittest.mock import patch
+
 from photo_metadata_patch import (
     index_media_files,
     load_json_metadata,
     get_duplicate_type,
+    process_metadata_files,
 )
 
 
@@ -65,6 +68,23 @@ class TestPhotoMetadataPatch(unittest.TestCase):
             self.assertEqual(
                 get_duplicate_type([file1], "A", media_index), "Unique"
             )
+
+    def test_commands_include_overwrite_flag(self):
+        report = Path("tests/output.csv")
+        if report.exists():
+            report.unlink()
+        with patch("photo_metadata_patch.apply_metadata_batch") as mock_apply:
+            mock_apply.return_value = True
+            process_metadata_files(
+                "tests",
+                dry_run=True,
+                parallel_workers=1,
+                output_path=report,
+            )
+            mock_apply.assert_called_once()
+            cmds = mock_apply.call_args[0][0]
+            self.assertTrue(cmds and all(cmd[0] == "-overwrite_original_in_place" for cmd in cmds))
+        report.unlink()
 
 
 if __name__ == "__main__":
