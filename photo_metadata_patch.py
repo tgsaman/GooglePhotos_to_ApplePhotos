@@ -2,13 +2,26 @@ import os
 import json
 import csv
 import shutil
-import subprocess
 from pathlib import Path
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
 import sys
 import argparse
 import shlex
+try:
+    from exiftool import ExifTool
+except ImportError:  # graceful fallback for environments without pyexiftool
+    ExifTool = None
+
+def flatten_json(y, parent_key='', sep=':'):
+    items = {}
+    for k, v in y.items():
+        new_key = f"{parent_key}{sep}{k}" if parent_key else k
+        if isinstance(v, dict):
+            items.update(flatten_json(v, new_key, sep=sep))
+        else:
+            items[new_key] = v
+    return items
 
 
 def check_directory_writable(path):
@@ -78,43 +91,37 @@ def get_duplicate_type(matches, metadata_url, media_index):
         return "Exact Duplicate" if len(matches) > 1 else "Unique"
     return "Misleading Duplicate"
 
-def prepare_exiftool_batch(commands, batch_file_path):
-    with open(batch_file_path, "w", encoding="utf-8") as f:
-        for line in commands:
-            f.write(line + "\n")
-
 def apply_metadata_batch(batch_commands, dry_run):
     """Execute a batch of exiftool commands unless dry_run is True."""
     if dry_run or not batch_commands:
         return True
 
     if not shutil.which("exiftool"):
-        print("Error: 'exiftool' not found. Please install exiftool and ensure it is in your PATH.", file=sys.stderr)
+        print(
+            "Error: 'exiftool' not found. Please install exiftool and ensure it is in your PATH.",
+            file=sys.stderr,
+        )
         return False
 
-    batch_file = Path("exiftool_batch.txt")
-    prepare_exiftool_batch(batch_commands, batch_file)
+    if ExifTool is None:
+        print("Error: pyexiftool not installed", file=sys.stderr)
+        return False
+
     try:
-        # Let exiftool write output directly to the console. Capturing stdout and
-        # stderr can cause the process to hang if large amounts of data are
-        # produced, so we rely on the parent's standard streams instead.
         print(f"Executing exiftool with {len(batch_commands)} commands")
         if dry_run:
             print("\n--- Batch Commands Preview ---")
             for cmd in batch_commands:
                 print(cmd)
+            return True
 
-        subprocess.run(
-            ["exiftool", "-@", str(batch_file), "-overwrite_original"], check=True
-        )
+        with ExifTool() as et:
+            for cmd in batch_commands:
+                et.execute(*[c.encode() for c in cmd])
         return True
-    except subprocess.CalledProcessError as e:
-        print(f"Exiftool batch error: {e.stderr.decode().strip()}", file=sys.stderr)
+    except Exception as e:
+        print(f"Exiftool batch error: {e}", file=sys.stderr)
         return False
-    finally:
-        if batch_file.exists():
-            batch_file.unlink()
-
 
 def process_metadata_files(project_root, dry_run=True, parallel_workers=4, output_path=None):
     """Process all JSON metadata files under project_root."""
@@ -231,7 +238,7 @@ def process_metadata_files(project_root, dry_run=True, parallel_workers=4, outpu
       # Ensure we have at least one metadata field *before* the file path
             if any(arg.startswith('-') for arg in cmd[:-1]):
                 quoted_cmd = " ".join(shlex.quote(c) for c in cmd)
-                batch_commands.append(quoted_cmd)
+                batch_commands.append(cmd)
             else:
                 note = "Metadata skipped: no valid operations"
             modified = "Yes" if not dry_run else "No"
@@ -239,7 +246,21 @@ def process_metadata_files(project_root, dry_run=True, parallel_workers=4, outpu
             if dry_run:
                 note = "Dry run only"
 
-        return [file, match.name, title, url, match_type, modified, size, note, ", ".join(missing_fields)]
+        flat_json = flatten_json(data)
+        row = {
+            "JSON Filename": file,
+            "Matched Media": match.name,
+            "Title": title,
+            "URL": url,
+            "Match Type": match_type,
+            "Modified?": modified,
+            "File Size in bytes": size,
+            "Notes": note,
+            "Missing Fields": ", ".join(missing_fields),
+            **flat_json  # injects all flattened JSON keys
+        }
+        return row
+
 
     json_paths = []
     for root, _, files in os.walk(root_path):
@@ -258,6 +279,12 @@ def process_metadata_files(project_root, dry_run=True, parallel_workers=4, outpu
                 log_rows.append(result)
 
     success = apply_metadata_batch(batch_commands, dry_run)
+    all_keys = set()
+    for row in log_rows:
+        if isinstance(row, dict):
+            all_keys.update(row.keys())
+
+    fieldnames = sorted(all_keys)
 
     log_csv_path = Path(output_path).expanduser() if output_path else Path.home() / "Desktop" / "metadata_report.csv"
     log_csv_path.parent.mkdir(parents=True, exist_ok=True)
@@ -269,9 +296,10 @@ def process_metadata_files(project_root, dry_run=True, parallel_workers=4, outpu
         sys.exit(1)
     try:
         with open(log_csv_path, "w", newline="", encoding="utf-8") as log_file:
-            writer = csv.writer(log_file)
-            writer.writerow(csv_headers)
+            writer = csv.DictWriter(log_file, fieldnames=fieldnames)
+            writer.writeheader()
             writer.writerows(log_rows)
+
     except Exception as e:
         print(f"Failed to write CSV log: {e}", file=sys.stderr)
         sys.exit(1)

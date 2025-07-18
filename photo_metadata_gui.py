@@ -2,6 +2,15 @@ import sys
 import shutil
 import tkinter as tk
 from tkinter import filedialog, messagebox
+from pathlib import Path
+
+# Support flexible project structure by adding potential parent
+# directories to sys.path until we find the patch module.
+SCRIPT_DIR = Path(__file__).resolve().parent
+for candidate in [SCRIPT_DIR, SCRIPT_DIR.parent, SCRIPT_DIR.parent.parent]:
+    if (candidate / "photo_metadata_patch.py").exists():
+        sys.path.insert(0, str(candidate))
+        break
 
 from photo_metadata_patch import process_metadata_files, check_directory_writable
 

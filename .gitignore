@@ -16,6 +16,9 @@ __pycache__/
 *.pyo
 /venv
 
+# Virtual environments
+venv/
+
 # 🤖 Codex + test logs (optional)
 debug_report.txt
 codex_session_notes.md
