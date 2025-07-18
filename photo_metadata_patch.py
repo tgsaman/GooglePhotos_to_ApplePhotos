@@ -7,7 +7,6 @@ from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
 import sys
 import argparse
-import shlex
 try:
     from exiftool import ExifTool
 except ImportError:  # graceful fallback for environments without pyexiftool
@@ -237,7 +236,6 @@ def process_metadata_files(project_root, dry_run=True, parallel_workers=4, outpu
             cmd.append(str(match))
       # Ensure we have at least one metadata field *before* the file path
             if any(arg.startswith('-') for arg in cmd[:-1]):
-                quoted_cmd = " ".join(shlex.quote(c) for c in cmd)
                 batch_commands.append(cmd)
             else:
                 note = "Metadata skipped: no valid operations"
