@@ -14,6 +14,7 @@ __pycache__/
 *.log
 *.pyc
 *.pyo
+/venv
 
 # 🤖 Codex + test logs (optional)
 debug_report.txt
