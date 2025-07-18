@@ -92,8 +92,15 @@ def get_duplicate_type(matches, metadata_url, media_index):
     return "Misleading Duplicate"
 
 def apply_metadata_batch(batch_commands, dry_run):
-    """Execute a batch of exiftool commands unless dry_run is True."""
-    if dry_run or not batch_commands:
+    """Execute a batch of exiftool commands or preview them when dry_run."""
+    if not batch_commands:
+        return True
+
+    print(f"Prepared {len(batch_commands)} exiftool commands")
+    if dry_run:
+        print("\n--- Batch Commands Preview ---")
+        for cmd in batch_commands:
+            print(" ".join(shlex.quote(c) for c in cmd))
         return True
 
     if not shutil.which("exiftool"):
@@ -109,12 +116,6 @@ def apply_metadata_batch(batch_commands, dry_run):
 
     try:
         print(f"Executing exiftool with {len(batch_commands)} commands")
-        if dry_run:
-            print("\n--- Batch Commands Preview ---")
-            for cmd in batch_commands:
-                print(cmd)
-            return True
-
         with ExifTool() as et:
             for cmd in batch_commands:
                 et.execute(*[c.encode() for c in cmd])
