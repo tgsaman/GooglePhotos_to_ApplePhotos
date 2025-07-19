@@ -140,7 +140,18 @@ def process_metadata_files(project_root, dry_run=True, parallel_workers=4, outpu
         file = json_path.name
         data = load_json_metadata(json_path)
         if not data:
-            return [file, "", "", "", "", "No", "", "Invalid JSON", "ALL"]
+            row = {
+                "JSON Filename": file,
+                "Matched Media": "",
+                "Title": "",
+                "URL": "",
+                "Match Type": "",
+                "Modified?": "No",
+                "File Size in bytes": "",
+                "Notes": "Invalid JSON",
+                "Missing Fields": "ALL",
+            }
+            return [row]
 
         title = data.get("title", "").lower()
         url = data.get("url", "")
@@ -171,16 +182,41 @@ def process_metadata_files(project_root, dry_run=True, parallel_workers=4, outpu
                 note = "No matching media file found; moved JSON"
             except Exception as e:
                 note = f"Failed to move JSON: {e}"
-            return [file, "", title, url, match_type, modified, "", note, ", ".join(missing_fields)]
+
+            flat_json = flatten_json(data)
+            row = {
+                "JSON Filename": file,
+                "Matched Media": "",
+                "Title": title,
+                "URL": url,
+                "Match Type": match_type,
+                "Modified?": modified,
+                "File Size in bytes": "",
+                "Notes": note,
+                "Missing Fields": ", ".join(missing_fields),
+                **flat_json,
+            }
+            return [row]
 
         match_type = get_duplicate_type(matched_files, url, media_index)
 
         if match_type != "Unique":
             rows = []
+            flat_json = flatten_json(data)
             for match in matched_files:
                 size = match.stat().st_size
-                rows.append([file, match.name, title, url, match_type,
-                            modified, size, f"Skipped overwrite due to {match_type.lower()}", ", ".join(missing_fields)])
+                rows.append({
+                    "JSON Filename": file,
+                    "Matched Media": match.name,
+                    "Title": title,
+                    "URL": url,
+                    "Match Type": match_type,
+                    "Modified?": modified,
+                    "File Size in bytes": size,
+                    "Notes": f"Skipped overwrite due to {match_type.lower()}",
+                    "Missing Fields": ", ".join(missing_fields),
+                    **flat_json,
+                })
             return rows
 
         match = matched_files[0]
@@ -243,7 +279,7 @@ def process_metadata_files(project_root, dry_run=True, parallel_workers=4, outpu
             "Missing Fields": ", ".join(missing_fields),
             **flat_json  # injects all flattened JSON keys
         }
-        return row
+        return [row]
 
 
     json_paths = []
@@ -256,11 +292,7 @@ def process_metadata_files(project_root, dry_run=True, parallel_workers=4, outpu
         total = len(json_paths)
         for i, result in enumerate(executor.map(process_json, json_paths), 1):
             print_progress_bar(i, total, prefix="Processing")
-
-            if isinstance(result, list) and all(isinstance(x, list) for x in result):
-                log_rows.extend(result)
-            else:
-                log_rows.append(result)
+            log_rows.extend(result)
 
     success = apply_metadata_batch(batch_commands, dry_run)
     all_keys = set()
