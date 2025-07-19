@@ -231,6 +231,8 @@ def process_metadata_files(project_root, dry_run=True, parallel_workers=4, outpu
                 note = "Dry run only"
 
         flat_json = flatten_json(data)
+        for key in ["title", "url"]:
+            flat_json.pop(key, None)
         row = {
             "JSON Filename": file,
             "Matched Media": match.name,
@@ -241,7 +243,7 @@ def process_metadata_files(project_root, dry_run=True, parallel_workers=4, outpu
             "File Size in bytes": size,
             "Notes": note,
             "Missing Fields": ", ".join(missing_fields),
-            **flat_json  # injects all flattened JSON keys
+            **flat_json  # injects all flattened JSON keys except duplicates
         }
         return row
 
