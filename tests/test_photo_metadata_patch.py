@@ -86,6 +86,25 @@ class TestPhotoMetadataPatch(unittest.TestCase):
             self.assertTrue(cmds and all(cmd[0] == "-overwrite_original_in_place" for cmd in cmds))
         report.unlink()
 
+    def test_csv_header_deduplicates_title_url(self):
+        report = Path("tests/output.csv")
+        if report.exists():
+            report.unlink()
+        with patch("photo_metadata_patch.apply_metadata_batch") as mock_apply:
+            mock_apply.return_value = True
+            process_metadata_files(
+                "tests",
+                dry_run=True,
+                parallel_workers=1,
+                output_path=report,
+            )
+        header = report.read_text(encoding="utf-8").splitlines()[0].split(",")
+        self.assertIn("Title", header)
+        self.assertIn("URL", header)
+        self.assertNotIn("title", header)
+        self.assertNotIn("url", header)
+        report.unlink()
+
 
 if __name__ == "__main__":
     unittest.main()
