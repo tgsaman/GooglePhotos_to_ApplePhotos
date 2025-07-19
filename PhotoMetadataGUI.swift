@@ -54,7 +54,7 @@ struct ContentView: View {
 
     private func chooseOutput() {
         let panel = NSSavePanel()
-        panel.allowedFileTypes = ["csv"]
+        panel.allowedContentTypes = ["csv"]
         if panel.runModal() == .OK {
             outputPath = panel.url?.path ?? ""
         }
@@ -101,8 +101,9 @@ struct ContentView: View {
     }
 }
 
-@main
-struct PhotoMetadataApp: App {
+@main -parse-as-librarystruct
+
+PhotoMetadataApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
