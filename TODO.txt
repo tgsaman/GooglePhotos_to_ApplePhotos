@@ -1,0 +1,7 @@
+- Launch Swift cmd currently throws an error. I'm not even sure I can wrap all of this up into an icon or executable... would it even help anyone? I'll need to see. Good practice problem to watch & learn at least
+
+- Legacy GUI has a deprecation warning, probably need to make a separate folder or delete
+
+- Analyze output to determine if writes were clean or systemically threw any cases (manual)
+
+- Develop analytics graphics (adds use cases for free .exe or App Store product if you get that far)
