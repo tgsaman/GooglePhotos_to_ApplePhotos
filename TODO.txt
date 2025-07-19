@@ -5,3 +5,11 @@
 - Analyze output to determine if writes were clean or systemically threw any cases (manual)
 
 - Develop analytics graphics (adds use cases for free .exe or App Store product if you get that far)
+
+- Misleading duplicate is too liberal, passing exact duplicates often. Exact duplicates still proc, though, so something isn't right with the url parse logic
+
+- Exact duplicates should process exactly once and then all duplicate images should be put in a new folder: "Duplicates" at the runtime root. 
+
+- CSV should write to the runtime root (pick a folder & everything is read & written in that same folder)
+
+- "used metadata" should all be moved to a folder for optional userspace cleanup
